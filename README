@@ -1,0 +1,104 @@
+Introduction
+
+The aim is to provide process specific data without interfering with the operation of the process.
+
+Description
+
+This script is written in python and intended to be run as a tcollector under Linux.
+All of metrics produced are calculated by parsing various files under /proc as such it should be real time, see the man page for proc(5)
+What this script collects depends on the configuration passed to it.
+Metrics
+
+The metrics collected follow the prefix proc.stat.ps and are as follow :
+
+proc.stat.ps.io
+
+rchar: characters read
+                     The number of bytes which this task has caused to be read from storage.  This is simply the sum of bytes which this process passed  to  read(2)
+                     and  similar  system  calls.  It includes things such as terminal I/O and is unaffected by whether or not actual physical disk I/O was required
+                     (the read might have been satisfied from pagecache).
+
+wchar: characters written
+                     The number of bytes which this task has caused, or shall cause to be written to disk.  Similar caveats apply here as with rchar.
+
+syscr: read syscalls
+                     Attempt to count the number of read I/O operations---that is, system calls such as read(2) and pread(2).
+
+syscw: write syscalls
+                     Attempt to count the number of write I/O operations---that is, system calls such as write(2) and pwrite(2).
+
+read_bytes: bytes read
+                     Attempt to count the number of bytes which this process really did cause to be fetched from the storage layer.  This  is  accurate  for  block-
+                     backed filesystems.
+
+write_bytes: bytes written
+                     Attempt to count the number of bytes which this process caused to be sent to the storage layer.
+
+cancelled_write_bytes:
+                     The big inaccuracy here is truncate.  If a process writes 1MB to a file and then deletes the file, it will in fact perform no writeout.  But it
+                     will have been accounted as having caused 1MB of write.  In other words: this field represents the number of bytes which this process caused to
+                     not happen, by truncating pagecache.  A task can cause "negative" I/O too.  If this task truncates some dirty pagecache, some I/O which another
+                     task has been accounted for (in its write_bytes) will not be happening.
+
+eg.
+
+cluster=dev42
+image=httpd
+type=write_bytes
+proc.stat.ps.fd
+
+Open file descriptors
+proc.stat.ps.threads
+
+Number of active threads for the specified process.
+proc.stat.ps.net
+
+Number of ESTABLISHED connections of the following types :
+
+tcp
+udp
+unix (unix domain sockets)
+
+eg.
+
+cluster=ams2
+class=nxa
+image=java
+type=tcp
+proc.stat.ps.pcpu
+
+Percentage CPU used.
+The calculation is based on a time sample over 1 second.
+proc.stat.ps.mem
+
+total - total program size - (Virtual memory size)
+
+resident - resident set size
+
+eg
+class=pxy
+cluster=ams3
+image=java
+type=total
+Configuration
+
+By default the configuration file is located at /<class>/shared/conf/psstat.conf and should be owned by appsc
+
+The format is as follows :
+imagename<white space>regex
+
+The regex is passed verbatim to the python regex engine, so please be careful. It is matched to full command line of the running process.
+Test your regexs here http://regex101.com/ (select python from the drop down)
+
+eg.
+fi/lrh          lrh.*fi/
+
+In TSD you would then be able to do :
+image=fi/lrh
+
+The collector will notice changes to the configuration file and reload it automatically, a restart is not needed.
+
+If you get unexpected results look at the  logs located here :
+/var/log/tcollector.log
+For more information set :
+DEBUG = True
