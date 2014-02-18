@@ -80,6 +80,7 @@ class=pxy
 cluster=ams3
 image=java
 type=total
+
 Configuration
 
 By default the configuration file is located at /<class>/shared/conf/psstat.conf and should be owned by appsc
